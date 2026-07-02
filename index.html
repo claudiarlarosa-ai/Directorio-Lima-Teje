@@ -133,6 +133,15 @@
   .vip-arte img {
     width: 100%; height: 100%; object-fit: cover; display: block;
   }
+  .vip-links {
+    display: flex; justify-content: center; gap: 18px;
+    padding: 12px 0 4px;
+  }
+  .vip-links a {
+    color: var(--muted); display: flex; align-items: center;
+    transition: color .15s;
+  }
+  .vip-links a:hover { color: var(--fucsia); }
 
   /* ════════════════════════
      TARJETAS BÁSICAS
@@ -669,6 +678,16 @@ function links(e, cls){
   return `<div class="${cls}">${h}</div>`;
 }
 
+function vipLinks(e){
+  let h="";
+  if(e.ig)     h+=`<a href="https://instagram.com/${e.ig.replace("@","")}" target="_blank" title="Instagram">${igIcon}</a>`;
+  if(e.fb)     h+=`<a href="https://facebook.com/${e.fb}" target="_blank" title="Facebook">${fbIcon}</a>`;
+  if(e.tiktok) h+=`<a href="https://tiktok.com/@${e.tiktok}" target="_blank" title="TikTok">${tiktokIcon}</a>`;
+  if(e.web)    h+=`<a href="https://${e.web}" target="_blank" title="Sitio web">${webIcon}</a>`;
+  if(e.email)  h+=`<a href="mailto:${e.email}" title="Correo">${mailIcon}</a>`;
+  return h ? `<div class="vip-links">${h}</div>` : "";
+}
+
 function renderVIP(e){ return `
   <div class="vip">
     <div class="vip-arte">
@@ -676,6 +695,7 @@ function renderVIP(e){ return `
         ? `<img src="${e.arte}" alt="${e.nombre}">`
         : `<div class="vip-nombre-placeholder">${e.nombre}</div>${e.categoria?`<div class="vip-cat-placeholder">${e.categoria}</div>`:""}`}
     </div>
+    ${vipLinks(e)}
   </div>`; }
 
 function renderBasica(e){ return `
