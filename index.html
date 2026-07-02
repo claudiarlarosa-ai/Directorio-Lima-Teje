@@ -116,6 +116,10 @@
     display: flex; align-items: center; justify-content: center;
     flex-direction: column; gap: 10px;
     border-radius: 14px;
+    position: relative;
+  }
+  .vip-icon-link {
+    position: absolute; display: block;
   }
   .vip-nombre-placeholder {
     font-size: 28px; font-weight: 800; color: rgba(255,255,255,0.15);
@@ -133,15 +137,6 @@
   .vip-arte img {
     width: 100%; height: 100%; object-fit: cover; display: block;
   }
-  .vip-links {
-    display: flex; justify-content: center; gap: 18px;
-    padding: 12px 0 4px;
-  }
-  .vip-links a {
-    color: var(--muted); display: flex; align-items: center;
-    transition: color .15s;
-  }
-  .vip-links a:hover { color: var(--fucsia); }
 
   /* ════════════════════════
      TARJETAS BÁSICAS
@@ -630,6 +625,7 @@ const expositores = [
   {
     tipo: "vip",
     nombre: "La Colonial",
+    vipIconPos: { fb: [57, 55], ig: [61.5, 55] },
     categoria: "",
     ciudad: "",
     desc: "",
@@ -678,14 +674,24 @@ function links(e, cls){
   return `<div class="${cls}">${h}</div>`;
 }
 
-function vipLinks(e){
-  let h="";
-  if(e.ig)     h+=`<a href="https://instagram.com/${e.ig.replace("@","")}" target="_blank" title="Instagram">${igIcon}</a>`;
-  if(e.fb)     h+=`<a href="https://facebook.com/${e.fb}" target="_blank" title="Facebook">${fbIcon}</a>`;
-  if(e.tiktok) h+=`<a href="https://tiktok.com/@${e.tiktok}" target="_blank" title="TikTok">${tiktokIcon}</a>`;
-  if(e.web)    h+=`<a href="https://${e.web}" target="_blank" title="Sitio web">${webIcon}</a>`;
-  if(e.email)  h+=`<a href="mailto:${e.email}" title="Correo">${mailIcon}</a>`;
-  return h ? `<div class="vip-links">${h}</div>` : "";
+function vipIconOverlays(e){
+  if(!e.vipIconPos) return "";
+  const urlFor = {
+    ig: e.ig ? `https://instagram.com/${e.ig.replace("@","")}` : null,
+    fb: e.fb ? `https://facebook.com/${e.fb}` : null,
+    tiktok: e.tiktok ? `https://tiktok.com/@${e.tiktok}` : null,
+    web: e.web ? `https://${e.web}` : null,
+    email: e.email ? `mailto:${e.email}` : null,
+  };
+  let h = "";
+  for(const key in e.vipIconPos){
+    const url = urlFor[key];
+    if(!url) continue;
+    const [cx, cy] = e.vipIconPos[key];
+    const w = 5.5, hgt = 11; // % width/height of the clickable box
+    h += `<a class="vip-icon-link" href="${url}" target="_blank" style="left:${cx-w/2}%;top:${cy-hgt/2}%;width:${w}%;height:${hgt}%;" title="${key}"></a>`;
+  }
+  return h;
 }
 
 function renderVIP(e){ return `
@@ -694,8 +700,8 @@ function renderVIP(e){ return `
       ${e.arte
         ? `<img src="${e.arte}" alt="${e.nombre}">`
         : `<div class="vip-nombre-placeholder">${e.nombre}</div>${e.categoria?`<div class="vip-cat-placeholder">${e.categoria}</div>`:""}`}
+      ${vipIconOverlays(e)}
     </div>
-    ${vipLinks(e)}
   </div>`; }
 
 function renderBasica(e){ return `
