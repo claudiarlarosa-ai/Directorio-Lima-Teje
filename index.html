@@ -121,6 +121,18 @@
   .vip-icon-link {
     position: absolute; display: block;
   }
+  .vip-visible-icons {
+    position: absolute; left: 12px; bottom: 12px;
+    background: var(--blanco); border-radius: 999px;
+    padding: 7px 12px; display: flex; gap: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.18);
+    z-index: 2;
+  }
+  .vip-visible-icons a {
+    color: var(--muted); display: flex; align-items: center;
+    transition: color .15s;
+  }
+  .vip-visible-icons a:hover { color: var(--fucsia); }
   .vip-nombre-placeholder {
     font-size: 28px; font-weight: 800; color: rgba(255,255,255,0.15);
     text-align: center; letter-spacing: .02em; padding: 0 32px;
@@ -677,6 +689,7 @@ const expositores = [
     tipo: "vip",
     nombre: "FibraMass",
     vipIconPos: { wa: [1.7, 4.7] },
+    vipVisibleIcons: ["ig", "fb", "tiktok"],
     categoria: "",
     ciudad: "",
     desc: "",
@@ -737,9 +750,8 @@ function links(e, cls){
   return `<div class="${cls}">${h}</div>`;
 }
 
-function vipIconOverlays(e){
-  if(!e.vipIconPos) return "";
-  const urlFor = {
+function vipUrlFor(e, key){
+  const map = {
     ig: e.ig ? `https://instagram.com/${e.ig.replace("@","")}` : null,
     fb: e.fb ? `https://facebook.com/${e.fb}` : null,
     tiktok: e.tiktok ? `https://tiktok.com/@${e.tiktok}` : null,
@@ -747,24 +759,73 @@ function vipIconOverlays(e){
     email: e.email ? `mailto:${e.email}` : null,
     wa: e.wa || null,
   };
+  return map[key];
+}
+
+function vipIconOverlays(e){
+  if(!e.vipIconPos) return "";
   let h = "";
   for(const key in e.vipIconPos){
-    const url = urlFor[key];
+    const url = vipUrlFor(e, key);
     if(!url) continue;
-    const [cx, cy, wOverride, hOverride] = e.vipIconPos[key];
-    const w = wOverride || 5.5, hgt = hOverride || 11; // % width/height of the clickable box
-    h += `<a class="vip-icon-link" href="${url}" target="_blank" style="left:${cx-w/2}%;top:${cy-hgt/2}%;width:${w}%;height:${hgt}%;" title="${key}"></a>`;
+    const [fx, fy, fw, fh] = e.vipIconPos[key];
+    h += `<a class="vip-icon-link" href="${url}" target="_blank" title="${key}" data-fx="${fx}" data-fy="${fy}" data-fw="${fw||5.5}" data-fh="${fh||11}"></a>`;
   }
   return h;
 }
+
+const vipIconSvg = { ig: () => igIcon, fb: () => fbIcon, tiktok: () => tiktokIcon, web: () => webIcon, email: () => mailIcon };
+
+function vipVisibleIcons(e){
+  if(!e.vipVisibleIcons || !e.vipVisibleIcons.length) return "";
+  let h = "";
+  for(const key of e.vipVisibleIcons){
+    const url = vipUrlFor(e, key);
+    if(!url || !vipIconSvg[key]) continue;
+    h += `<a href="${url}" target="_blank" title="${key}">${vipIconSvg[key]()}</a>`;
+  }
+  return h ? `<div class="vip-visible-icons">${h}</div>` : "";
+}
+
+function positionVipIcons(){
+  document.querySelectorAll(".vip-arte").forEach(container => {
+    const img = container.querySelector("img");
+    const links = container.querySelectorAll(".vip-icon-link");
+    if(!img || !links.length || !img.naturalWidth) return;
+    const cw = container.clientWidth, ch = container.clientHeight;
+    const nw = img.naturalWidth, nh = img.naturalHeight;
+    const scale = Math.max(cw/nw, ch/nh);
+    const sw = nw*scale, sh = nh*scale;
+    const posStr = (img.style.objectPosition || "center center").trim();
+    const parts = posStr.split(/\s+/);
+    const hMap = {left:0, center:0.5, right:1};
+    const vMap = {top:0, center:0.5, bottom:1};
+    const hAnchor = hMap[parts[0]] ?? 0.5;
+    const vAnchor = vMap[parts[1]] ?? 0.5;
+    const offsetX = (cw - sw) * hAnchor;
+    const offsetY = (ch - sh) * vAnchor;
+    links.forEach(a => {
+      const fx = parseFloat(a.dataset.fx)/100, fy = parseFloat(a.dataset.fy)/100;
+      const fw = parseFloat(a.dataset.fw)/100, fh = parseFloat(a.dataset.fh)/100;
+      const px = offsetX + fx*sw, py = offsetY + fy*sh;
+      const pw = fw*sw, ph = fh*sh;
+      a.style.left = (px - pw/2) + "px";
+      a.style.top = (py - ph/2) + "px";
+      a.style.width = pw + "px";
+      a.style.height = ph + "px";
+    });
+  });
+}
+window.addEventListener("resize", positionVipIcons);
 
 function renderVIP(e){ return `
   <div class="vip">
     <div class="vip-arte">
       ${e.arte
-        ? `<img src="${e.arte}" alt="${e.nombre}" style="object-position:${e.mobileFocus || "center"};">`
+        ? `<img src="${e.arte}" alt="${e.nombre}" style="object-position:${e.mobileFocus || "center"};" onload="positionVipIcons()">`
         : `<div class="vip-nombre-placeholder">${e.nombre}</div>${e.categoria?`<div class="vip-cat-placeholder">${e.categoria}</div>`:""}`}
       ${vipIconOverlays(e)}
+      ${vipVisibleIcons(e)}
     </div>
   </div>`; }
 
@@ -801,6 +862,8 @@ function filtrar(){
   document.getElementById("sinResultados").style.display = vis.length?"none":"block";
   document.getElementById("conteo").textContent =
     vis.length+(vis.length===1?" expositor":" expositores");
+  positionVipIcons();
+  setTimeout(positionVipIcons, 100);
 }
 pintarFiltros(); filtrar();
 </script>
