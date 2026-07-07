@@ -216,7 +216,6 @@
   @media(max-width: 640px) {
     .grid { grid-template-columns: 1fr; }
     .vip-arte { aspect-ratio: unset; height: 280px; }
-    .vip-arte img { object-position: right center; }
   }
 </style>
 </head>
@@ -697,6 +696,7 @@ const expositores = [
   {
     tipo: "vip",
     nombre: "Malabrigo",
+    mobileFocus: "right center",
     categoria: "",
     ciudad: "",
     desc: "",
@@ -761,7 +761,7 @@ function renderVIP(e){ return `
   <div class="vip">
     <div class="vip-arte">
       ${e.arte
-        ? `<img src="${e.arte}" alt="${e.nombre}">`
+        ? `<img src="${e.arte}" alt="${e.nombre}" style="object-position:${e.mobileFocus || "center"};">`
         : `<div class="vip-nombre-placeholder">${e.nombre}</div>${e.categoria?`<div class="vip-cat-placeholder">${e.categoria}</div>`:""}`}
       ${vipIconOverlays(e)}
     </div>
